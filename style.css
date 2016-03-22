@@ -1,0 +1,35 @@
+body {
+  margin: 0px;
+  padding: 0px;
+}
+body, input { font-size:12px; }
+span.partydef { display: block; margin: 5px 0; }
+#container {
+  margin: 0 auto;
+}
+#leftpane {
+  padding: 0 10px;
+}
+canvas { margin-top:10px; }
+#toppane {
+  padding: 10px;
+}
+#settingsL {
+  width: 70%;
+}
+#settingsR {
+  float: right;
+  width: 30%;
+}
+#settingsL input { width: 80%; }
+
+#console {
+  position:absolute;
+  right: 0;
+  width: 200px;
+  border-left: 1px solid #ccc;
+  overflow: auto;
+  background: #fff;
+  padding: 10px;
+  display: none;
+}

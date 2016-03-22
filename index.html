@@ -1,0 +1,151 @@
+<!DOCTYPE HTML>
+<html>
+  <head>
+    <script src="jquery-2.1.4.min.js"></script>
+    <script src="graph.js"></script>
+    <link rel="stylesheet" href="style.css">
+  </head>
+  <body>
+    <div id="container">
+      <div id="console"></div>
+      <div id="toppane">
+        <div id="settingsR">
+          <b>Plot:</b>
+          <span class="partydef">Resource segments: <input type="text" id="segments" value="70" /></span>
+          <span class="partydef">Max height: <input type="text" id="maxY" value="11" /></span>
+          <span><button onClick="javascript:refresh()">Refresh</button></span>
+        </div>
+        <div id="settingsL">
+          <b>Valuation functions:</b>
+          <span class="partydef"><span style="color:green;">Party A</span> V(n)=<input type="text" id="valFunc1"
+            value="10 * pow( exp( - pow((n+6)/5 ,2)) , 1/4 )" /></span>
+          <span class="partydef"><span style="color:blue;">Party B</span> V(n)=<input type="text" id="valFunc2"
+            value="4 * (1 - Math.tanh(n/2-2))" /></span>
+          <span class="partydef"><span style="color:red;">Party C</span> V(n)=<input type="text" id="valFunc3"
+            value="1 * exp(-(1/10) * n)" /></span>
+        </div>
+      </div>
+      <div id="leftpane">
+        <canvas id="myCanvas" height="300px"></canvas>
+        <canvas id="resCanvas" height="130px"></canvas>
+      </div>
+    </div>
+    <script>
+      var myGraph, resGraph, parties, nbSegments
+      var pow = Math.pow
+      var exp = Math.exp
+    
+      // not used
+      function valuationFunc(peak, breadth, center) {
+        return function(n) { return peak * Math.pow( Math.exp(-Math.pow((n-center)/breadth ,2)) , 1/4 ) }
+      }
+      
+      function addParty(inputId, color) {
+        var f = $("#"+inputId).val()
+        if (f != "") {
+          parties[parties.length] = {
+            valFunc: function(n) { return eval(f); },
+            color: color
+          }
+        }
+      }
+      
+      function refresh() {
+        if (myGraph) myGraph.clear()
+        if (resGraph) resGraph.clear()
+        $("#console").html("")
+        
+        $("#segments").val()
+      
+        myGraph = new Graph({
+          canvasId: 'myCanvas',
+          minX: -10,
+          minY: -1,
+          maxX: $("#segments").val(),
+          maxY: $("#maxY").val(),
+          unitsPerTick: 10
+        });
+        resGraph = new Graph({
+          canvasId: 'resCanvas',
+          minX: myGraph.minX,
+          minY: 0,
+          maxX: myGraph.maxX,
+          maxY: 105,
+          unitsPerTick: 10
+        });
+        
+        parties = []
+        addParty("valFunc1", 'green')
+        addParty("valFunc2", 'blue')
+        addParty("valFunc3", 'red')
+        
+        for (var pi=0 ; pi < parties.length ; pi++) {
+          var p = parties[pi]
+          myGraph.drawEquation({
+            equation: p.valFunc,
+            color: p.color,
+            thickness: 1
+          })
+          p.xoffset = 0
+          p.res = 0
+        }
+        
+        for (var i=0 ; i<=myGraph.maxX ; i++) {
+          // find max bid for resource i
+          var maxBid = 0
+          var maxBidPartyIdx = -1
+          for (var pi=0 ; pi < parties.length ; pi++) {
+            var p = parties[pi]
+            var bid = p.valFunc(i-p.xoffset)
+            if (bid > maxBid) {
+              maxBid = bid
+              maxBidPartyIdx = pi
+            }
+          }
+          
+          // draw max bidder valuation function for segment [i, i+1]
+          var maxBidder = parties[maxBidPartyIdx]
+          myGraph.drawEquation({
+            equation: function(x) {return maxBidder.valFunc(x-maxBidder.xoffset)},
+            color: maxBidder.color,
+            thickness: 3,
+            minX: i,
+            maxX: i+1
+          })
+          maxBidder.res++;
+          
+          // increment offset of other parties
+          for (var pi=0 ; pi < parties.length ; pi++) {
+            if (pi != maxBidPartyIdx) parties[pi].xoffset++;
+          }
+          
+          // resource share canvas
+          var log = "Resource "+(i+1)+": "
+          var shareSum = 0
+          for (var pi=0 ; pi < parties.length ; pi++) {
+            var share = parties[pi].res * 1.0 / (i+1) * 100
+            log += " " + Math.floor(share) + "%"
+            resGraph.drawRect({
+              x1:i,
+              x2:i+1,
+              y1:shareSum,
+              y2: shareSum+share,
+              color: parties[pi].color
+            })
+            shareSum += share
+          }
+          $('#console').html( $('#console').html()+log+"<br/>" )
+        }
+      }
+      
+      $( document ).ready(function() {
+        var w = window.innerWidth - 22+"px"
+        $("#myCanvas").attr("width", w)
+        $("#resCanvas").attr("width", w)
+        refresh()
+      });
+      
+    </script>
+  </body>
+</html>
+      

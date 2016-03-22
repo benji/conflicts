@@ -4,3 +4,4 @@ Web based tool to demonstrate how a resource can be split between parties given 
 
 ![](https://raw.github.com/benji/conflicts/master/screenshot-1.png)
 
+@see [demo](http://graphitfor.me/poc/conflicts/).
